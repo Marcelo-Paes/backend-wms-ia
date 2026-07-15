@@ -14,12 +14,13 @@ app.use(cors({
 
 app.use(express.json());
 
-// O Render injeta as variáveis de ambiente direto no process.env, sem precisar de dotenv
+// O Render injeta as variáveis de ambiente direto no process.env
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
   console.warn("AVISO: A variável GEMINI_API_KEY não foi encontrada no ambiente!");
 }
 
+// CORREÇÃO AQUI: Instanciando a classe correta conforme a especificação do SDK do Google
 const ai = new GoogleGenAI({ apiKey: apiKey });
 
 app.post('/generate-slides', async (req, res) => {
