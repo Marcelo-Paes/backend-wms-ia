@@ -1,12 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenAI } = require('@google/generative-ai');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Permite que o seu painel WMS e o HTML acessem este serviço de qualquer lugar
+// Configuração de CORS para permitir requisições de qualquer origem
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST'],
@@ -15,10 +14,14 @@ app.use(cors({
 
 app.use(express.json());
 
-// Inicializa o Gemini usando a chave que está configurada no painel do Render
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// O Render injeta as variáveis de ambiente direto no process.env, sem precisar de dotenv
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn("AVISO: A variável GEMINI_API_KEY não foi encontrada no ambiente!");
+}
 
-// ROTA PRINCIPAL QUE SEU FRONTEND CHAMA
+const ai = new GoogleGenAI({ apiKey: apiKey });
+
 app.post('/generate-slides', async (req, res) => {
   try {
     const { rawText } = req.body;
@@ -51,11 +54,10 @@ app.post('/generate-slides', async (req, res) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // Limpeza profunda caso o Gemini insista em colocar blocos de markdown ```json
+    // Limpeza profunda de tags markdown
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const slides = JSON.parse(cleanJson);
 
-    // Retorna os slides estruturados exatamente como o frontend espera
     return res.json({ slides });
 
   } catch (error) {
@@ -64,7 +66,6 @@ app.post('/generate-slides', async (req, res) => {
   }
 });
 
-// Mantém o servidor escutando na porta correta para o Render
 app.listen(PORT, () => {
   console.log(`Servidor WMS ativo e rodando na porta ${PORT}`);
 });
