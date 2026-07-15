@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+// CORREÇÃO DA IMPORTAÇÃO: GoogleGenAI é o nome correto da classe exportada pelo SDK do Google
 const { GoogleGenAI } = require('@google/generative-ai');
 
 const app = express();
@@ -20,7 +21,7 @@ if (!apiKey) {
   console.warn("AVISO: A variável GEMINI_API_KEY não foi encontrada no ambiente!");
 }
 
-// CORREÇÃO AQUI: Instanciando a classe correta conforme a especificação do SDK do Google
+// Inicializando a inteligência artificial com a classe correta
 const ai = new GoogleGenAI({ apiKey: apiKey });
 
 app.post('/generate-slides', async (req, res) => {
