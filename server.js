@@ -42,13 +42,14 @@ app.post('/generate-slides', async (req, res) => {
       "${rawText}"
     `;
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // CORREÇÃO AQUI: Usando o modelo universal "gemini-pro" que não dá erro 404
+    const model = ai.getGenerativeModel({ model: "gemini-pro" });
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    console.log("Resposta bruta da IA:", responseText); // Mostra o que a IA devolveu lá no log do Render
+    console.log("Resposta bruta da IA:", responseText);
 
-    // Filtro à prova de balas: extrai apenas a parte que é array (entre [ e ])
+    // Filtro à prova de balas
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       throw new Error("A IA não retornou um formato de array JSON válido.");
@@ -60,7 +61,6 @@ app.post('/generate-slides', async (req, res) => {
 
   } catch (error) {
     console.error('Detalhe do Erro 500:', error.message);
-    // Agora o backend manda o erro exato para a tela do seu site!
     return res.status(500).json({ error: `Falha interna: ${error.message}` });
   }
 });
