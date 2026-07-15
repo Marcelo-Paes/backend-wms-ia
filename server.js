@@ -42,8 +42,8 @@ app.post('/generate-slides', async (req, res) => {
       "${rawText}"
     `;
 
-    // CORREÇÃO AQUI: Usando o modelo universal "gemini-pro" que não dá erro 404
-    const model = ai.getGenerativeModel({ model: "gemini-pro" });
+    // CORREÇÃO: Usando a versão atualizada e ativa do Gemini (2.0)
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
