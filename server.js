@@ -1,12 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-// AQUI ESTAVA O MEU ERRO! O nome exato da classe na biblioteca é GoogleGenerativeAI
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Configuração de CORS para permitir requisições de qualquer origem
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST'],
@@ -15,13 +13,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// O Render injeta as variáveis de ambiente direto no process.env
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  console.warn("AVISO: A variável GEMINI_API_KEY não foi encontrada no ambiente!");
-}
-
-// Inicializando a inteligência artificial com a classe oficial CORRETA
 const ai = new GoogleGenerativeAI(apiKey);
 
 app.post('/generate-slides', async (req, res) => {
@@ -32,23 +24,21 @@ app.post('/generate-slides', async (req, res) => {
       return res.status(400).json({ error: 'Texto bruto (rawText) não fornecido.' });
     }
 
+    if (!apiKey) {
+      throw new Error("A chave GEMINI_API_KEY não está configurada no Render.");
+    }
+
     const prompt = `
-      Você é um especialista em estruturação de apresentações executivas corporativas e logísticas.
-      Analise o texto abaixo e separe-o em slides lógicos com títulos adequados, profissionais e de fácil leitura.
-      
-      Regras estritas de Negócio:
-      - O primeiro slide (index 0) DEVE ser a capa (use obrigatoriamente "type": "capa").
-      - Os slides seguintes devem ser de conteúdo detalhado (use obrigatoriamente "type": "content").
-      - Extraia títulos executivos limpos baseados nos tópicos do texto.
-      - Cada slide de conteúdo deve ter no máximo 3 bullets claros e diretos.
-      - Retorne estritamente um array JSON válido no formato abaixo. Não adicione nenhuma formatação markdown extra, nenhuma crase, e não escreva a palavra "json":
+      Você é um especialista em apresentações executivas logísticas.
+      Analise o texto abaixo e retorne ESTRITAMENTE um array JSON. 
+      Não escreva NENHUMA palavra antes ou depois do JSON. Não use formatação markdown (sem \`\`\`json).
       
       [
-        { "type": "capa", "title": "Título Principal da Capa", "subtitle": "Legenda ou subtexto explicativo" },
-        { "type": "content", "title": "Título do Slide", "bullets": ["Ponto chave 1", "Ponto chave 2", "Ponto chave 3"] }
+        { "type": "capa", "title": "Título", "subtitle": "Subtítulo" },
+        { "type": "content", "title": "Tópico", "bullets": ["Ponto 1", "Ponto 2"] }
       ]
 
-      Texto para analisar:
+      Texto:
       "${rawText}"
     `;
 
@@ -56,15 +46,22 @@ app.post('/generate-slides', async (req, res) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // Limpeza profunda de tags markdown
-    const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const slides = JSON.parse(cleanJson);
+    console.log("Resposta bruta da IA:", responseText); // Mostra o que a IA devolveu lá no log do Render
+
+    // Filtro à prova de balas: extrai apenas a parte que é array (entre [ e ])
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error("A IA não retornou um formato de array JSON válido.");
+    }
+
+    const slides = JSON.parse(jsonMatch[0]);
 
     return res.json({ slides });
 
   } catch (error) {
-    console.error('Erro no processamento com Gemini:', error);
-    return res.status(500).json({ error: 'Erro ao processar dados na Inteligência Artificial.' });
+    console.error('Detalhe do Erro 500:', error.message);
+    // Agora o backend manda o erro exato para a tela do seu site!
+    return res.status(500).json({ error: `Falha interna: ${error.message}` });
   }
 });
 
