@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-// CORREÇÃO DA IMPORTAÇÃO: O SDK oficial do Google exporta a classe GoogleGenAI
-const { GoogleGenAI } = require('@google/generative-ai');
+// AQUI ESTAVA O MEU ERRO! O nome exato da classe na biblioteca é GoogleGenerativeAI
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -21,8 +21,8 @@ if (!apiKey) {
   console.warn("AVISO: A variável GEMINI_API_KEY não foi encontrada no ambiente!");
 }
 
-// Inicializando a inteligência artificial com a classe oficial correta do SDK
-const ai = new GoogleGenAI(apiKey);
+// Inicializando a inteligência artificial com a classe oficial CORRETA
+const ai = new GoogleGenerativeAI(apiKey);
 
 app.post('/generate-slides', async (req, res) => {
   try {
@@ -52,7 +52,6 @@ app.post('/generate-slides', async (req, res) => {
       "${rawText}"
     `;
 
-    // O método getGenerativeModel permanece idêntico
     const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
